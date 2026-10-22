@@ -16,6 +16,8 @@ on install, and an EMPTY data/ folder in an unpacked app makes the installation 
 AppInstall.gatherDataFilesRecursively calls `this.` inside a plain function callback when a folder has no files),
 so the build refuses empty folders. The app creates its vault file itself on the first save.
 A released version is never overwritten: the script refuses when its files exist. Fix → bump the version.
+A release takes the app files from the commit, not from the disk, and refuses when the disk differs (a Windows checkout
+can hold CRLF line endings that `git status` does not show), so the ZIP is reproducible from the tag.
 """
 import hashlib, json, os, re, shutil, subprocess, sys, zipfile
 
@@ -136,25 +138,58 @@ def app_files():
     return files
 
 
-def build_zip(path, files):
+def read_disk(rel):
+    with open(os.path.join(ROOT, rel), 'rb') as f:
+        return f.read()
+
+
+def read_commit(commit):
+    """Reader for the bytes git stores in `commit` – what the source ZIP and the tag contain."""
+    def read(rel):
+        return subprocess.run(['git', '-C', ROOT, 'cat-file', 'blob', '%s:%s' % (commit, rel)],
+                              capture_output=True, check=True).stdout
+    return read
+
+
+def check_disk_matches(files, read):
+    """A release is built from the commit. Files on disk that differ from it (e.g. CRLF line endings in a Windows
+    checkout, which `* text=auto eol=lf` hides from `git status`) mean the checks above did not see what ships."""
+    eol, other = [], []
+    for rel in files:
+        disk, committed = read_disk(rel), read(rel)
+        if disk != committed:
+            (eol if disk.replace(b'\r\n', b'\n') == committed else other).append(rel)
+    msg = []
+    if eol:
+        msg.append('only line endings differ (CRLF on disk) in: %s\n  fix each with `git rm --cached <file>` and then '
+                   '`git checkout HEAD -- <file>` (rewrites it from the commit with LF)' % ', '.join(eol))
+    if other:
+        msg.append('content differs from the commit in: %s – commit or undo these changes first' % ', '.join(other))
+    if msg:
+        die('files on disk differ from the commit HEAD:\n  ' + '\n  '.join(msg))
+
+
+def build_zip(path, files, read=read_disk):
     with zipfile.ZipFile(path, 'x', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for rel in files:  # files only – no directory entries, so no empty folder can appear
             info = zipfile.ZipInfo(rel, FIXED_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
-            with open(os.path.join(ROOT, rel), 'rb') as f:
-                z.writestr(info, f.read())
+            info.create_system = 3  # Unix, as the mode above; Python's default differs on Windows (0) and Linux (3)
+            z.writestr(info, read(rel))
     with zipfile.ZipFile(path) as z:
-        if z.testzip() is not None or sorted(z.namelist()) != sorted(files):
+        if z.testzip() is not None or sorted(z.namelist()) != sorted(files) or \
+                any(z.read(rel) != read(rel) for rel in files):
             os.remove(path)
             die('the ZIP did not verify')
 
 
-def build_folder(path, files):
+def build_folder(path, files, read=read_disk):
     for rel in files:
         dst = os.path.join(path, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copyfile(os.path.join(ROOT, rel), dst)
+        with open(dst, 'wb') as f:
+            f.write(read(rel))
 
 
 def sha256(p):
@@ -189,12 +224,15 @@ def main():
         build_folder(folder, files)
         print('dev build: %s (%d files, %d bytes) and %s' % (path, len(files), os.path.getsize(path), folder))
         return
-    if git('status', '--porcelain').strip():
-        die('uncommitted changes – commit first (a release is built from a commit)')
-    tracked = set(git('ls-files').split('\n'))
-    untracked = [f for f in files if f not in tracked]
+    commit = git('rev-parse', 'HEAD').strip()
+    committed = set(git('ls-tree', '-r', '--name-only', commit).split('\n'))
+    untracked = [f for f in files if f not in committed]
     if untracked:
         die('files in the app that are not committed: ' + ', '.join(untracked))
+    read = read_commit(commit)
+    check_disk_matches(files, read)
+    if git('status', '--porcelain').strip():
+        die('uncommitted changes – commit first (a release is built from a commit)')
     tag = 'v' + ver
     if tag in git('tag', '--list', tag).split():
         die('tag %s exists already – bump the version' % tag)
@@ -206,9 +244,8 @@ def main():
     for p in (app_zip, src_zip, folder, sums):
         if os.path.exists(p):
             die(os.path.basename(p) + ' exists already – released versions are never overwritten; bump the version')
-    build_zip(app_zip, files)
-    build_folder(folder, files)
-    commit = git('rev-parse', 'HEAD').strip()
+    build_zip(app_zip, files, read)
+    build_folder(folder, files, read)
     subprocess.run(['git', '-C', ROOT, 'archive', '--format=zip', '--prefix=%s-%s/' % (NAME, ver), '-o', src_zip, commit], check=True)
     with zipfile.ZipFile(src_zip) as z:
         listed = sorted(n[len('%s-%s/' % (NAME, ver)):] for n in z.namelist() if not n.endswith('/'))
