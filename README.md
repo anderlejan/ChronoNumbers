@@ -20,7 +20,7 @@ outside Peergos (the Peergos sandbox would block them anyway).
 
 ## Install
 
-1. Download `ChronoNumbers-v<version>.zip` from the latest release.
+1. Download `ChronoNumbers-v<version>.zip` from the [latest release](../../releases/latest).
 2. In Peergos, upload the ZIP to your drive and click it to open it (Peergos shows what is inside).
 3. Open the menu (⋮) of `peergos-app.json` → **Install** → confirm. Installing a newer version over an older one
    keeps your accounts.
