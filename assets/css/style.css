@@ -1,0 +1,107 @@
+:root { --background-color: #121212; --surface-color: #1E1E1E; --primary-color: #BB86FC; --secondary-color: #03DAC6; --text-color: #E1E1E1; --text-color-muted: #888; --error-color: #CF6679; --border-color: #2c2c2c; }
+body { background-color: var(--background-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; font-size: 16px; overscroll-behavior: none; }
+.hidden { display: none !important; }
+#app-container.locked > *:not(#login-modal) { filter: blur(5px); pointer-events: none; user-select: none; }
+#app-container { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; }
+
+header { padding: 0.5rem 1rem 1rem 1rem; background-color: var(--surface-color); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+#settings-toggle {
+    font-size: 1.5em;
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 1.5em;
+}
+.header-main h1 {
+    flex-grow: 1;
+    text-align: center;
+    margin: 0;
+    font-size: clamp(1.3em, 8vw, 2em);
+    color: var(--primary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.header-spacer {
+    width: 1.5em; /* Match the width of the settings toggle */
+    flex-shrink: 0;
+}
+
+#search-bar { width: 100%; padding: 8px 12px; background-color: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; box-sizing: border-box; }
+#codes-container { flex-grow: 1; padding: 1rem; overflow-y: auto; }
+#codes-container.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+.code-item { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+.item-actions { position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; opacity: 0.2; transition: opacity 0.2s; font-size: 1rem; }
+.code-item:hover .item-actions { opacity: 1; }
+.item-actions button { background: none; border: none; color: var(--text-color-muted); cursor: pointer; font-size: 1.2em; padding: 5px; }
+.item-actions button:hover { color: var(--text-color); }
+.code-item .issuer-info { margin-bottom: 0.5rem; padding-right: 60px; }
+.code-item .issuer { font-weight: bold; font-size: 1.1em; word-wrap: break-word; }
+.code-item .name { font-size: 0.9em; color: var(--text-color-muted); word-wrap: break-word; }
+#codes-container.hide-issuer .issuer, #codes-container.hide-name .name, #codes-container.hide-actions .item-actions { display: none; }
+#codes-container.hide-actions .issuer-info { padding-right: 0; }
+.code-item .code { font-family: 'Courier New', Courier, monospace; font-size: 2.2em; letter-spacing: 3px; color: var(--secondary-color); margin: 0.5rem 0; font-weight: bold; cursor: pointer; padding: 5px; border-radius: 4px; }
+.code-item .code:hover { background-color: #ffffff10; }
+.code-item .progress-bar { width: 100%; height: 4px; background-color: var(--border-color); border-radius: 2px; overflow: hidden; margin-top: 1rem; }
+.code-item .progress-bar-inner { height: 100%; background-color: var(--primary-color); transition: width 1s linear; }
+.code-item-placeholder { text-align: center; color: var(--text-color-muted); padding: 3rem 1rem; }
+footer { padding: 0.5rem 1rem; background-color: var(--surface-color); border-top: 1px solid var(--border-color); text-align: center; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
+.footer-text { font-size: 0.8em; color: var(--text-color-muted); }
+#add-account-btn { background-color: var(--primary-color); color: var(--background-color); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 2em; cursor: pointer; }
+#settings-panel { position: fixed; top: 0; right: 0; width: 300px; height: 100%; background-color: var(--surface-color); box-shadow: -5px 0 15px rgba(0,0,0,0.5); transform: translateX(100%); transition: transform 0.3s; z-index: 1000; display: flex; flex-direction: column; }
+#settings-panel:not(.hidden) { transform: translateX(0); }
+.settings-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0;}
+#settings-close { cursor: pointer; font-size: 1.5rem; }
+.settings-content { padding: 1rem; flex-grow: 1; overflow-y: auto; }
+.setting-item { margin-bottom: 1.5rem; }
+.setting-item > label { display: block; margin-bottom: 0.5rem; color: var(--text-color-muted); }
+.setting-item button { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); background-color: var(--background-color); color: var(--text-color); cursor: pointer; border-radius: 4px; margin-top: 0.5rem; }
+.setting-item button:hover { border-color: var(--primary-color); }
+.danger-btn { color: var(--error-color) !important; border-color: var(--error-color) !important; }
+.danger-btn:hover { color: var(--background-color) !important; background-color: var(--error-color) !important; }
+.checkbox-setting { display: flex; align-items: center; margin-bottom: 0.5rem; }
+.checkbox-setting input[type="checkbox"] { margin-right: 10px; }
+.layout-options { display: flex; gap: 10px; }
+.layout-btn { flex-grow: 1; padding: 0.5rem; border: 1px solid var(--border-color); background: transparent; color: var(--text-color); cursor: pointer; }
+.layout-btn.active { background-color: var(--primary-color); color: var(--background-color); border-color: var(--primary-color); }
+.modal-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal-content { background-color: var(--surface-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; display: flex; flex-direction: column; max-height: 90vh; }
+.modal-scroll-content { overflow-y: auto; }
+.modal-content h2 { margin-top: 0; }
+#show-qr-canvas { display: block; margin: 1rem auto; background-color: white; border-radius: 8px; }
+.qr-export-instructions { font-size: 0.9em; text-align: center; color: var(--text-color-muted); }
+.secret-input-wrapper { display: flex; align-items: center; width: 100%; margin-bottom: 10px; position: relative; }
+.secret-input-wrapper input { flex-grow: 1; width: 100%; margin-bottom: 0; padding-right: 40px; box-sizing: border-box; }
+.secret-input-wrapper .toggle-password { background: none; border: none; color: var(--text-color); cursor: pointer; position: absolute; right: 0; top: 0; height: 100%; font-size: 1.5em; padding: 0 10px; }
+#scan-qr-button { width: 100%; padding: 1rem; font-size: 1.1em; font-weight: bold; background-color: var(--primary-color); color: var(--background-color); border: none; border-radius: 4px; cursor: pointer; margin-bottom: 1rem; }
+.separator-text { width: 100%; text-align: center; border-bottom: 1px solid var(--border-color); line-height: 0.1em; margin: 20px 0; color: var(--text-color-muted); }
+.separator-text span { background: var(--surface-color); padding: 0 10px; }
+.modal-content label { margin-top: 10px; margin-bottom: 5px; font-size: 0.9em; color: var(--text-color-muted); }
+.modal-content input, .modal-content textarea, .modal-content select { width: 100%; padding: 10px; margin-bottom: 10px; background-color: var(--background-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; box-sizing: border-box; }
+#aegis-json-input, #export-data-textarea, #edit-note { min-height: 100px; resize: vertical; font-family: monospace; }
+.export-options { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.export-options button { flex-grow: 1; padding: 0.5rem; border: 1px solid var(--border-color); background: transparent; color: var(--text-color); cursor: pointer; }
+.export-options button:hover { border-color: var(--primary-color); }
+.export-options button:disabled { border-color: var(--text-color-muted); color: var(--text-color-muted); cursor: not-allowed; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
+.modal-actions button { padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); background: transparent; color: var(--text-color); cursor: pointer; }
+.modal-actions button:hover { border-color: var(--secondary-color); }
+.modal-actions button:disabled { border-color: var(--text-color-muted); color: var(--text-color-muted); cursor: not-allowed; }
+.error-text { color: var(--error-color); font-size: 0.9em; min-height: 1.2em; text-align: center; }
+details.advanced-settings { border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; margin-top: 1rem; }
+details.advanced-settings summary { cursor: pointer; color: var(--primary-color); }
+/* 1.7.0 – buttons that were plain elements, toast, load error */
+#settings-toggle, #settings-close { background: none; border: none; color: var(--text-color); padding: 0; line-height: 1; }
+#settings-toggle:focus-visible, #settings-close:focus-visible, button:focus-visible { outline: 2px solid var(--secondary-color); outline-offset: 2px; }
+.toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); max-width: 90%; background-color: var(--surface-color); color: var(--text-color); border: 1px solid var(--primary-color); border-radius: 6px; padding: 0.6rem 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 3000; cursor: pointer; font-size: 0.9em; text-align: center; }
+.load-error { margin: 1rem; padding: 1rem; border: 1px solid var(--error-color); border-radius: 8px; text-align: center; }
+.load-error p { margin: 0 0 0.75rem 0; }
+.load-error .muted, .muted { color: var(--text-color-muted); font-size: 0.9em; }
+.load-error button { padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--primary-color); background: transparent; color: var(--text-color); cursor: pointer; }
+#save-status { min-height: 1.2em; }

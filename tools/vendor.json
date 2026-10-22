@@ -1,0 +1,15 @@
+{
+  "assets/vendor/jsQR.js": {
+    "what": "jsQR 1.4.0 – QR code reader (dist/jsQR.js of the npm package, unchanged)",
+    "source": "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz",
+    "license": "Apache-2.0",
+    "sha256": "bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859"
+  },
+  "assets/vendor/qrcodegen.js": {
+    "what": "QR Code generator library by Project Nayuki – typescript-javascript/qrcodegen.ts compiled with TypeScript 5.6.3 (tsc --target ES2017 --strict)",
+    "source": "https://github.com/nayuki/QR-Code-generator/blob/3c6d0b3cefb4e049dc337e82237c9644399716a8/typescript-javascript/qrcodegen.ts",
+    "source_sha256": "1dc03fb5a10e0e2318ea162755bbdb9977ca6ce52cff959e9c9b6deafdccda9c",
+    "license": "MIT",
+    "sha256": "79f419f267ce5a80d97f8099e0a789a4ecc4697b5348d86371a1f3b2a75d6e03"
+  }
+}

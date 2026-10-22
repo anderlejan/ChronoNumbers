@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoNumbers Authenticator</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app-container" class="locked">
+        <header>
+            <div class="header-main">
+                <button type="button" id="settings-toggle" title="Settings" aria-label="Settings">⚙️</button>
+                <h1>ChronoNumbers</h1>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="search-wrapper">
+                <input type="search" id="search-bar" placeholder="Search accounts..." aria-label="Search accounts">
+            </div>
+        </header>
+
+        <div id="load-error" class="load-error hidden" role="alert">
+            <p id="load-error-text"></p>
+            <p class="muted">Nothing was changed. Your accounts are safe in Peergos.</p>
+            <button type="button" id="load-retry-btn">Try again</button>
+        </div>
+
+        <main id="codes-container" class="codes-container list" aria-live="polite">
+            <!-- 2FA codes are inserted here -->
+        </main>
+
+        <footer>
+            <div id="footer-version" class="footer-text"></div>
+            <button type="button" id="add-account-btn" title="Add account" aria-label="Add account">+</button>
+            <div class="footer-text">by anderlejan</div>
+        </footer>
+
+        <div id="toast" class="toast hidden" role="status"></div>
+
+        <!-- Settings Panel (initially hidden) -->
+        <div id="settings-panel" class="hidden">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button type="button" id="settings-close" title="Close" aria-label="Close settings">✖</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label>Account Display</label>
+                    <div class="checkbox-setting"><input type="checkbox" id="show-issuer-check" checked><label for="show-issuer-check">Show Issuer</label></div>
+                    <div class="checkbox-setting"><input type="checkbox" id="show-name-check" checked><label for="show-name-check">Show Name</label></div>
+                    <div class="checkbox-setting"><input type="checkbox" id="show-actions-check" checked><label for="show-actions-check">Show Action Buttons</label></div>
+                </div>
+                <div class="setting-item">
+                    <label>Privacy</label>
+                    <div class="checkbox-setting"><input type="checkbox" id="mask-codes-check" checked><label for="mask-codes-check">Mask Codes (show asterisks)</label></div>
+                </div>
+                <div class="setting-item">
+                    <label for="font-size-slider">Account Font Size</label>
+                    <input type="range" id="font-size-slider" min="10" max="24" value="16">
+                </div>
+                <div class="setting-item">
+                    <label>Layout</label>
+                    <div class="layout-options">
+                        <button type="button" class="layout-btn" data-layout="grid">Grid</button>
+                        <button type="button" class="layout-btn active" data-layout="list">List</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>Data Management</label>
+                    <button type="button" id="import-aegis-btn">Import from Aegis</button>
+                    <button type="button" id="import-encrypted-vault-btn">Import Encrypted Vault</button>
+                    <button type="button" id="export-vault-btn">Export Vault</button>
+                    <button type="button" id="delete-all-btn" class="danger-btn">Delete All Accounts</button>
+                </div>
+                <div class="setting-item">
+                    <label>Security</label>
+                    <div class="checkbox-setting">
+                        <input type="checkbox" id="password-enabled-checkbox">
+                        <label for="password-enabled-checkbox">Protect with a master password</label>
+                    </div>
+                    <button type="button" id="change-password-btn" class="hidden">Change Master Password</button>
+                </div>
+                <div class="setting-item">
+                    <div id="save-status" class="footer-text"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Account Modal -->
+        <div id="add-account-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2>Add New Account</h2>
+                <button type="button" id="scan-qr-button">📷 Scan QR from Image File</button>
+                <input type="file" id="qr-file-input" class="hidden" accept="image/png,image/jpeg,image/jpg,image/webp,image/bmp,image/gif">
+                <p class="separator-text"><span>OR</span></p>
+                <p>Enter details manually:</p>
+                <input type="text" id="manual-issuer" placeholder="Issuer (e.g., Google)" autocomplete="off">
+                <input type="text" id="manual-secret" placeholder="Secret Key" autocomplete="off" spellcheck="false">
+                <p id="add-error" class="error-text"></p>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-add-account">Cancel</button>
+                    <button type="button" id="save-manual-account">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Account Modal -->
+        <div id="edit-account-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <div class="modal-scroll-content">
+                    <h2>Edit Account</h2>
+                    <input type="hidden" id="edit-uuid">
+                    <label for="edit-issuer">Issuer:</label>
+                    <input type="text" id="edit-issuer" autocomplete="off">
+                    <label for="edit-name">Name:</label>
+                    <input type="text" id="edit-name" autocomplete="off">
+                    <label for="edit-group">Group:</label>
+                    <input type="text" id="edit-group" autocomplete="off">
+                    <label for="edit-secret">Secret Key:</label>
+                    <div class="secret-input-wrapper">
+                        <input type="password" id="edit-secret" autocomplete="off" spellcheck="false">
+                        <button type="button" class="toggle-password" title="Show/hide">👁️</button>
+                    </div>
+                    <label for="edit-note">Note:</label>
+                    <textarea id="edit-note"></textarea>
+                    <details class="advanced-settings">
+                        <summary>Advanced</summary>
+                        <label for="edit-digits">Digits:</label>
+                        <input type="number" id="edit-digits" min="6" max="8" step="1">
+                        <label for="edit-period">Period (seconds):</label>
+                        <input type="number" id="edit-period" min="15" step="1">
+                        <label for="edit-algo">Algorithm:</label>
+                        <select id="edit-algo">
+                            <option value="SHA1">SHA1</option>
+                            <option value="SHA256">SHA256</option>
+                            <option value="SHA512">SHA512</option>
+                        </select>
+                    </details>
+                    <p id="edit-error" class="error-text"></p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-edit-account">Cancel</button>
+                    <button type="button" id="update-edit-account">Update</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aegis Import Modal -->
+        <div id="aegis-import-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2>Import from Aegis Vault</h2>
+                <p>Paste JSON below.</p>
+                <textarea id="aegis-json-input" spellcheck="false"></textarea>
+                <p id="aegis-error" class="error-text"></p>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-aegis-import">Cancel</button>
+                    <button type="button" id="confirm-aegis-import">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Encrypted Vault Import Modal -->
+        <div id="encrypted-import-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2>Import Encrypted Vault</h2>
+                <p>Paste the encrypted vault JSON below, then enter the password.</p>
+                <textarea id="encrypted-vault-input" placeholder="Paste encrypted vault JSON here..." spellcheck="false"></textarea>
+                <label for="import-password">Vault Password:</label>
+                <div class="secret-input-wrapper">
+                    <input type="password" id="import-password" placeholder="Enter vault password">
+                    <button type="button" class="toggle-password" title="Show/hide">👁️</button>
+                </div>
+                <p id="import-error" class="error-text"></p>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-encrypted-import">Cancel</button>
+                    <button type="button" id="confirm-encrypted-import">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Vault Modal -->
+        <div id="export-vault-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2>Export Vault</h2>
+                <p>Copy the contents below.</p>
+                <div class="export-options">
+                    <button type="button" id="export-unencrypted-btn">Export Unencrypted (Aegis)</button>
+                    <button type="button" id="export-encrypted-btn" disabled>Export Encrypted</button>
+                </div>
+                <textarea id="export-data-textarea" readonly spellcheck="false"></textarea>
+                <div class="modal-actions">
+                    <button type="button" id="copy-export-btn">Copy</button>
+                    <button type="button" id="close-export-btn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Show QR Modal -->
+        <div id="show-qr-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2>Account QR Code</h2>
+                <p id="show-qr-label"></p>
+                <div id="show-qr-canvas"></div>
+                <p class="qr-export-instructions">Scan this with a standard authenticator app to import the account.</p>
+                <div class="modal-actions">
+                    <button type="button" id="close-qr-modal-btn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login / Password Modal -->
+        <div id="login-modal" class="modal-container hidden">
+            <div class="modal-content">
+                <h2 id="login-title">Enter Password</h2>
+                <p id="login-prompt">Please enter your password.</p>
+                <div class="secret-input-wrapper">
+                    <input type="password" id="password-input-old" class="hidden" placeholder="Current Password" autocomplete="current-password">
+                    <button type="button" class="toggle-password hidden" title="Show/hide">👁️</button>
+                </div>
+                <div class="secret-input-wrapper">
+                    <input type="password" id="password-input" placeholder="Password" autocomplete="current-password">
+                    <button type="button" class="toggle-password" title="Show/hide">👁️</button>
+                </div>
+                <div class="secret-input-wrapper">
+                    <input type="password" id="password-confirm" class="hidden" placeholder="Confirm Password" autocomplete="new-password">
+                    <button type="button" class="toggle-password hidden" title="Show/hide">👁️</button>
+                </div>
+                <p id="password-error" class="error-text hidden"></p>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-password-change" class="hidden">Cancel</button>
+                    <button type="button" id="login-button">Unlock</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="vendor/jsQR.js"></script>
+    <script src="vendor/qrcodegen.js"></script>
+    <script src="js/version.js"></script>
+    <script src="js/encoding.js"></script>
+    <script src="js/totp.js"></script>
+    <script src="js/vaultcrypto.js"></script>
+    <script src="js/accounts.js"></script>
+    <script src="js/vault.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/qr.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

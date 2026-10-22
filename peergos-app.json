@@ -1,0 +1,12 @@
+{
+    "schemaVersion": 1,
+    "displayName": "ChronoNumbers",
+    "description": "Secure TOTP Authenticator for Peergos",
+    "version": "1.7.0",
+    "author": "anderlejan",
+    "launchable": true,
+    "appIcon": "icon.png",
+    "permissions": [
+        "STORE_APP_DATA"
+    ]
+}
